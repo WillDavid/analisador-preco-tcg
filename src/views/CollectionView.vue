@@ -43,7 +43,7 @@
       <div class="icon"><PackageIcon :size="48" /></div>
       <h3>{{ t('collection.emptyTitle') }}</h3>
       <p>{{ t('collection.emptyMsg') }}</p>
-      <router-link :to="navPath('/importar', '/carga')" class="btn-primary">{{ t('collection.emptyBtn') }}</router-link>
+      <router-link :to="navPath('/config', '/config')" class="btn-primary">{{ t('collection.emptyBtn') }}</router-link>
     </div>
 
     <div v-else class="card">

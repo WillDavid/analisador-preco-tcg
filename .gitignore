@@ -3,6 +3,5 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
-src/exemplo_pdf/
 server/data/app.db-journal
 server/data/app.db-wal

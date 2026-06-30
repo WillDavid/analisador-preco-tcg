@@ -22,14 +22,14 @@
       <div class="icon"><FileDownIcon :size="48" /></div>
       <h3>{{ t('dashboard.emptyTitle') }}</h3>
       <p>{{ t('dashboard.emptyMsg') }}</p>
-      <router-link :to="navPath('/importar', '/carga')" class="btn-primary">{{ t('dashboard.emptyBtn') }}</router-link>
+      <router-link :to="navPath('/config', '/config')" class="btn-primary">{{ t('dashboard.emptyBtn') }}</router-link>
     </div>
 
     <div v-else-if="imports.length === 1" class="empty-state">
       <div class="icon"><FileDownIcon :size="48" /></div>
       <h3>{{ t('dashboard.singleTitle') }}</h3>
       <p>{{ t('dashboard.singleMsg') }}</p>
-      <router-link :to="navPath('/importar', '/carga')" class="btn-primary">{{ t('dashboard.singleBtn') }}</router-link>
+      <router-link :to="navPath('/config', '/config')" class="btn-primary">{{ t('dashboard.singleBtn') }}</router-link>
     </div>
 
     <template v-else>

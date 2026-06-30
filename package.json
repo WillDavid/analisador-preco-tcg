@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "chart.js": "^4.4.0",
+    "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "express": "^4.21.0",
     "lucide-vue-next": "^0.344.0",
-    "pdfjs-dist": "^4.0.379",
     "sql.js": "^1.14.1",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0"

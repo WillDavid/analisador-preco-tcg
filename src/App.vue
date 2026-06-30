@@ -11,9 +11,9 @@
           <LayoutDashboardIcon :size="18" />
           {{ t('nav.dashboard') }}
         </router-link>
-        <router-link :to="navPath('/importar', '/carga')">
-          <UploadIcon :size="18" />
-          {{ t('nav.import') }}
+        <router-link :to="navPath('/config', '/config')">
+          <SettingsIcon :size="18" />
+          {{ t('nav.config') }}
         </router-link>
         <router-link :to="navPath('/colecao', '/base')">
           <PackageIcon :size="18" />
@@ -57,13 +57,13 @@
 </template>
 
 <script>
-import { DollarSignIcon, LayoutDashboardIcon, UploadIcon, PackageIcon, HistoryIcon, EyeIcon, EyeOffIcon, RefreshCwIcon } from 'lucide-vue-next'
+import { DollarSignIcon, LayoutDashboardIcon, SettingsIcon, PackageIcon, HistoryIcon, EyeIcon, EyeOffIcon, RefreshCwIcon } from 'lucide-vue-next'
 import { getImports, getLatestPriceHistory } from '@/services/storageService.js'
 import { useLabels } from '@/composables/useLabels.js'
 
 export default {
   name: 'App',
-  components: { DollarSignIcon, LayoutDashboardIcon, UploadIcon, PackageIcon, HistoryIcon, EyeIcon, EyeOffIcon, RefreshCwIcon },
+  components: { DollarSignIcon, LayoutDashboardIcon, SettingsIcon, PackageIcon, HistoryIcon, EyeIcon, EyeOffIcon, RefreshCwIcon },
   setup() {
     const { t, mode, toggleMode } = useLabels()
     document.title = t('app.title')

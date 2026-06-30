@@ -9,7 +9,7 @@
       <div class="icon"><CalendarIcon :size="48" /></div>
       <h3>{{ t('history.emptyTitle') }}</h3>
       <p>{{ t('history.emptyMsg') }}</p>
-      <router-link :to="navPath('/importar', '/carga')" class="btn-primary">{{ t('history.emptyBtn') }}</router-link>
+      <router-link :to="navPath('/config', '/config')" class="btn-primary">{{ t('history.emptyBtn') }}</router-link>
     </div>
 
     <div v-else class="card">
