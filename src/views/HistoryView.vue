@@ -83,6 +83,8 @@ export default {
   data() {
     return {
       imports: [],
+      totalsCache: {},
+      countCache: {},
       showDeleteModal: false,
       deleteTarget: null
     }
@@ -100,32 +102,41 @@ export default {
     formatDate(v) { return formatDate(v) },
     formatDateTime(v) { return formatDateTime(v) },
     getTotal(id) {
-      const hist = getPriceHistoryByImportId(id)
-      return getCollectionTotal(hist, 'buyMin')
+      return this.totalsCache[id] || 0
     },
     getHistoryCount(id) {
-      return getPriceHistoryByImportId(id).length
+      return this.countCache[id] || 0
     },
     getVariation(currentId, prevId) {
-      const curr = getCollectionTotal(getPriceHistoryByImportId(currentId), 'buyMin')
-      const prev = getCollectionTotal(getPriceHistoryByImportId(prevId), 'buyMin')
+      const curr = this.totalsCache[currentId] || 0
+      const prev = this.totalsCache[prevId] || 0
       return curr - prev
     },
     confirmDelete(imp) {
       this.deleteTarget = imp
       this.showDeleteModal = true
     },
-    doDelete() {
+    async doDelete() {
       if (this.deleteTarget) {
-        deleteImport(this.deleteTarget.id)
-        this.imports = getImports()
+        await deleteImport(this.deleteTarget.id)
+        await this.loadData()
       }
       this.showDeleteModal = false
       this.deleteTarget = null
+    },
+    async loadData() {
+      this.imports = await getImports()
+      this.totalsCache = {}
+      this.countCache = {}
+      for (const imp of this.imports) {
+        const hist = await getPriceHistoryByImportId(imp.id)
+        this.totalsCache[imp.id] = getCollectionTotal(hist, 'buyMin')
+        this.countCache[imp.id] = hist.length
+      }
     }
   },
-  mounted() {
-    this.imports = getImports()
+  async mounted() {
+    await this.loadData()
   }
 }
 </script>

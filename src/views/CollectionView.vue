@@ -147,15 +147,15 @@ export default {
       this.selectedCard = card
       this.showDetail = true
     },
-    loadData() {
-      const imports = getImports().sort((a, b) => a.referenceDate.localeCompare(b.referenceDate))
+    async loadData() {
+      const imports = (await getImports()).sort((a, b) => a.referenceDate.localeCompare(b.referenceDate))
       if (imports.length === 0) return
 
       const latest = imports[imports.length - 1]
-      const currentHistory = getPriceHistoryByImportId(latest.id)
+      const currentHistory = await getPriceHistoryByImportId(latest.id)
       let previousHistory = []
       if (imports.length > 1) {
-        previousHistory = getPriceHistoryByImportId(imports[imports.length - 2].id)
+        previousHistory = await getPriceHistoryByImportId(imports[imports.length - 2].id)
       }
 
       if (previousHistory.length > 0) {
@@ -174,8 +174,8 @@ export default {
       }
     }
   },
-  mounted() {
-    this.loadData()
+  async mounted() {
+    await this.loadData()
   }
 }
 </script>

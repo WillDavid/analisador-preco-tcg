@@ -160,6 +160,7 @@ export default {
       currentHistory: [],
       previousHistory: [],
       comparison: [],
+      totalsByImport: {},
       showDetail: false,
       selectedCard: {}
     }
@@ -211,10 +212,7 @@ export default {
       return this.imports.map(i => formatDate(i.referenceDate))
     },
     chartData() {
-      return this.imports.map(imp => {
-        const hist = getPriceHistoryByImportId(imp.id)
-        return getCollectionTotal(hist, 'buyMin')
-      })
+      return this.imports.map(imp => this.totalsByImport[imp.id] || 0)
     }
   },
   methods: {
@@ -223,15 +221,20 @@ export default {
     },
     formatCurrency(val) { return formatBrazilianCurrency(val) },
     formatDate(val) { return formatDate(val) },
-    loadData() {
-      this.imports = getImports().sort((a, b) => a.referenceDate.localeCompare(b.referenceDate))
+    async loadData() {
+      this.imports = (await getImports()).sort((a, b) => a.referenceDate.localeCompare(b.referenceDate))
+      this.totalsByImport = {}
+      for (const imp of this.imports) {
+        const hist = await getPriceHistoryByImportId(imp.id)
+        this.totalsByImport[imp.id] = getCollectionTotal(hist, 'buyMin')
+      }
       if (this.imports.length > 0) {
         const latest = this.imports[this.imports.length - 1]
-        this.currentHistory = getPriceHistoryByImportId(latest.id)
+        this.currentHistory = await getPriceHistoryByImportId(latest.id)
       }
       if (this.imports.length > 1) {
         const prev = this.imports[this.imports.length - 2]
-        this.previousHistory = getPriceHistoryByImportId(prev.id)
+        this.previousHistory = await getPriceHistoryByImportId(prev.id)
       }
       if (this.currentHistory.length && this.previousHistory.length) {
         this.comparison = computeComparison(this.currentHistory, this.previousHistory, 'buyMin')
@@ -242,8 +245,8 @@ export default {
       this.showDetail = true
     }
   },
-  mounted() {
-    this.loadData()
+  async mounted() {
+    await this.loadData()
   }
 }
 </script>

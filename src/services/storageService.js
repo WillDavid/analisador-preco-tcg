@@ -20,71 +20,167 @@ function migrate() {
 
 migrate()
 
-export function getImports() {
+let _apiAvailable = null
+
+async function apiAvailable() {
+  if (_apiAvailable !== null) return _apiAvailable
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_IMPORTS) || '[]')
+    const res = await fetch('/api/health')
+    _apiAvailable = res.ok
+    if (_apiAvailable) await tryMigrate()
   } catch {
-    return []
+    _apiAvailable = false
   }
+  return _apiAvailable
 }
 
-export function saveImport(importData) {
-  const imports = getImports()
+async function tryMigrate() {
+  const localImports = localStorage.getItem(STORAGE_IMPORTS)
+    || localStorage.getItem('pokemon_imports')
+  if (!localImports) return
+
+  try {
+    const res = await fetch('/api/migrate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imports: JSON.parse(localStorage.getItem(STORAGE_IMPORTS) || localStorage.getItem('pokemon_imports') || '[]'),
+        priceHistory: JSON.parse(localStorage.getItem(STORAGE_PRICE_HISTORY) || localStorage.getItem('pokemon_price_history') || '[]'),
+        settings: JSON.parse(localStorage.getItem(STORAGE_SETTINGS) || localStorage.getItem('pokemon_settings') || '{}')
+      })
+    })
+    const result = await res.json()
+    if (result.migrated) {
+      console.log(`[migrate] Dados migrados para o banco: ${result.operations} operacoes, ${result.entries} entradas`)
+    }
+  } catch { /* ignore migration errors */ }
+}
+
+function apiPost(path, body) {
+  return fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }).then(r => r.json())
+}
+
+function apiDelete(path) {
+  return fetch(path, { method: 'DELETE' }).then(r => r.json())
+}
+
+// --- Operacoes ---
+
+export async function getImports() {
+  if (await apiAvailable()) {
+    return fetch('/api/operations').then(r => r.json())
+  }
+  try { return JSON.parse(localStorage.getItem(STORAGE_IMPORTS) || '[]') } catch { return [] }
+}
+
+export async function saveImport(importData, entries) {
+  if (await apiAvailable()) {
+    const body = { ...importData, entries: entries || [] }
+    await apiPost('/api/operations', body)
+    return
+  }
+  const imports = await getImports()
   imports.push(importData)
   localStorage.setItem(STORAGE_IMPORTS, JSON.stringify(imports))
 }
 
-export function getImportById(id) {
-  return getImports().find(i => i.id === id) || null
+export async function getImportById(id) {
+  const imports = await getImports()
+  return imports.find(i => i.id === id) || null
 }
 
-export function getImportByDate(referenceDate) {
-  return getImports().find(i => i.referenceDate === referenceDate) || null
+export async function getImportByDate(referenceDate) {
+  const imports = await getImports()
+  return imports.find(i => i.referenceDate === referenceDate) || null
 }
 
-export function getImportByHash(fileHash) {
-  return getImports().find(i => i.fileHash === fileHash) || null
+export async function getImportByHash(fileHash) {
+  const imports = await getImports()
+  return imports.find(i => i.fileHash === fileHash) || null
 }
 
-export function deleteImport(id) {
-  const imports = getImports().filter(i => i.id !== id)
+export async function deleteImport(id) {
+  if (await apiAvailable()) {
+    await apiDelete(`/api/operations/${id}`)
+    return
+  }
+  const imports = (await getImports()).filter(i => i.id !== id)
   localStorage.setItem(STORAGE_IMPORTS, JSON.stringify(imports))
-  const history = getPriceHistory().filter(h => h.importId !== id)
+  const history = (await getPriceHistory()).filter(h => h.importId !== id)
   localStorage.setItem(STORAGE_PRICE_HISTORY, JSON.stringify(history))
 }
 
-export function getPriceHistory() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_PRICE_HISTORY) || '[]')
-  } catch {
-    return []
+// --- Historico de precos ---
+
+export async function getPriceHistory() {
+  if (await apiAvailable()) {
+    return fetch('/api/entries').then(r => r.json())
   }
+  try { return JSON.parse(localStorage.getItem(STORAGE_PRICE_HISTORY) || '[]') } catch { return [] }
 }
 
-export function savePriceHistory(records) {
-  const existing = getPriceHistory()
+export async function savePriceHistory(records) {
+  if (await apiAvailable()) return
+  const existing = await getPriceHistory()
   existing.push(...records)
   localStorage.setItem(STORAGE_PRICE_HISTORY, JSON.stringify(existing))
 }
 
-export function getPriceHistoryByImportId(importId) {
-  return getPriceHistory().filter(h => h.importId === importId)
+export async function saveFullImport(importRecord, historyRecords) {
+  if (await apiAvailable()) {
+    const entries = historyRecords.map(r => ({
+      uniqueKey: r.uniqueKey,
+      category: r.edition || null,
+      reference: r.number || null,
+      name: r.name || null,
+      level: r.rarity || null,
+      language: r.language || null,
+      state: r.condition || null,
+      notes: r.extra || null,
+      quantity: r.quantity || 1,
+      entry_min: r.prices?.buyMin ?? null,
+      entry_avg: r.prices?.buyAvg ?? null,
+      entry_max: r.prices?.buyMax ?? null,
+      exit_min: r.prices?.sellMin ?? null,
+      exit_avg: r.prices?.sellAvg ?? null,
+      exit_max: r.prices?.sellMax ?? null
+    }))
+    return apiPost('/api/operations', {
+      referenceDate: importRecord.referenceDate,
+      filename: importRecord.filename,
+      fileHash: importRecord.fileHash,
+      totals: importRecord.totals,
+      entries
+    })
+  }
+  saveImport(importRecord)
+  savePriceHistory(historyRecords)
 }
 
-export function getPriceHistoryByKey(uniqueKey) {
-  return getPriceHistory().filter(h => h.uniqueKey === uniqueKey)
+export async function getPriceHistoryByImportId(importId) {
+  if (await apiAvailable()) {
+    return fetch(`/api/entries?operation_id=${importId}`).then(r => r.json())
+  }
+  return (await getPriceHistory()).filter(h => h.importId === importId)
 }
 
-export function getDistinctCards() {
-  const history = getPriceHistory()
+export async function getPriceHistoryByKey(uniqueKey) {
+  if (await apiAvailable()) {
+    return fetch(`/api/entries/by-key/${encodeURIComponent(uniqueKey)}`).then(r => r.json())
+  }
+  return (await getPriceHistory()).filter(h => h.uniqueKey === uniqueKey)
+}
+
+export async function getDistinctCards() {
+  const history = await getPriceHistory()
   const map = new Map()
   for (const h of history) {
     if (!map.has(h.uniqueKey)) {
-      map.set(h.uniqueKey, {
-        ...h,
-        firstSeen: h.referenceDate,
-        lastSeen: h.referenceDate
-      })
+      map.set(h.uniqueKey, { ...h, firstSeen: h.referenceDate, lastSeen: h.referenceDate })
     } else {
       const existing = map.get(h.uniqueKey)
       if (h.referenceDate < existing.firstSeen) existing.firstSeen = h.referenceDate
@@ -94,33 +190,49 @@ export function getDistinctCards() {
   return Array.from(map.values())
 }
 
-export function getLatestPriceHistory() {
-  const imports = getImports()
+export async function getLatestPriceHistory() {
+  if (await apiAvailable()) {
+    return fetch('/api/entries/latest').then(r => r.json())
+  }
+  const imports = await getImports()
   if (imports.length === 0) return []
   imports.sort((a, b) => a.referenceDate.localeCompare(b.referenceDate))
   const latest = imports[imports.length - 1]
   return getPriceHistoryByImportId(latest.id)
 }
 
-export function getPreviousPriceHistory() {
-  const imports = getImports()
+export async function getPreviousPriceHistory() {
+  if (await apiAvailable()) {
+    return fetch('/api/entries/previous').then(r => r.json())
+  }
+  const imports = await getImports()
   if (imports.length < 2) return []
   imports.sort((a, b) => a.referenceDate.localeCompare(b.referenceDate))
   const prev = imports[imports.length - 2]
   return getPriceHistoryByImportId(prev.id)
 }
 
-export function getSettings() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_SETTINGS) || '{}')
-  } catch {
-    return {}
+// --- Settings ---
+
+export async function getSettings() {
+  if (await apiAvailable()) {
+    return fetch('/api/settings').then(r => r.json())
   }
+  try { return JSON.parse(localStorage.getItem(STORAGE_SETTINGS) || '{}') } catch { return {} }
 }
 
-export function saveSettings(settings) {
+export async function saveSettings(settings) {
+  if (await apiAvailable()) {
+    return fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    })
+  }
   localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(settings))
 }
+
+// --- Factory ---
 
 export function createImportRecord({ referenceDate, filename, fileHash, totals, cardsData }) {
   const importId = generateId()
@@ -156,11 +268,21 @@ export function createImportRecord({ referenceDate, filename, fileHash, totals, 
   return { importRecord, historyRecords }
 }
 
-export function exportAllData() {
+// --- Backup ---
+
+export async function exportAllData() {
+  if (await apiAvailable()) {
+    const [imports, allEntries, settings] = await Promise.all([
+      fetch('/api/operations').then(r => r.json()),
+      fetch('/api/entries').then(r => r.json()),
+      fetch('/api/settings').then(r => r.json())
+    ])
+    return { imports, priceHistory: allEntries, settings, exportedAt: new Date().toISOString() }
+  }
   return {
-    imports: getImports(),
-    priceHistory: getPriceHistory(),
-    settings: getSettings(),
+    imports: await getImports(),
+    priceHistory: await getPriceHistory(),
+    settings: await getSettings(),
     exportedAt: new Date().toISOString()
   }
 }

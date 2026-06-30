@@ -118,8 +118,7 @@ import { generateId } from '@/utils/identifiers.js'
 import {
   getImports,
   getImportByDate,
-  saveImport,
-  savePriceHistory
+  saveFullImport
 } from '@/services/storageService.js'
 import { useLabels } from '@/composables/useLabels.js'
 import ImportPreviewTable from '@/components/ImportPreviewTable.vue'
@@ -243,8 +242,8 @@ export default {
       if (this.$refs.fileInput) this.$refs.fileInput.value = ''
     },
 
-    handleConfirm() {
-      const existing = getImportByDate(this.referenceDate)
+    async handleConfirm() {
+      const existing = await getImportByDate(this.referenceDate)
       if (existing) {
         this.showConfirm = true
         return
@@ -252,7 +251,7 @@ export default {
       this.doSave()
     },
 
-    doSave() {
+    async doSave() {
       this.showConfirm = false
       this.saving = true
 
@@ -305,8 +304,7 @@ export default {
           }
         }))
 
-        saveImport(importRecord)
-        savePriceHistory(historyRecords)
+        await saveFullImport(importRecord, historyRecords)
         this.confirmed = true
       } catch (err) {
         console.error('Erro ao salvar:', err)

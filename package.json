@@ -4,19 +4,25 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"node server/index.js\"",
+    "dev:front": "vite",
+    "dev:api": "node server/index.js",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.4.0",
-    "vue-router": "^4.3.0",
-    "pdfjs-dist": "^4.0.379",
     "chart.js": "^4.4.0",
-    "lucide-vue-next": "^0.344.0"
+    "cors": "^2.8.6",
+    "express": "^4.21.0",
+    "lucide-vue-next": "^0.344.0",
+    "pdfjs-dist": "^4.0.379",
+    "sql.js": "^1.14.1",
+    "vue": "^3.4.0",
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
+    "concurrently": "^9.2.3",
     "vite": "^5.4.0"
   }
 }
