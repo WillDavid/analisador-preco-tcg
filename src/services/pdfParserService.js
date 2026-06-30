@@ -166,7 +166,7 @@ export function parseAllItems(allItems) {
   }
 
   if (headerStart < 0) {
-    return { cards: [], totals: null, errors: ['Tabela de cartas nao encontrada no PDF'] }
+    return { cards: [], totals: null, errors: ['Tabela de dados nao encontrada no arquivo'] }
   }
 
   let headerEnd = headerStart
@@ -211,12 +211,12 @@ export function parseAllItems(allItems) {
   const errors = []
   for (const card of cards) {
     const cardErrors = []
-    if (!card.edition) cardErrors.push('Edicao ausente')
-    if (!card.number) cardErrors.push('Numero ausente')
+    if (!card.edition) cardErrors.push('Categoria ausente')
+    if (!card.number) cardErrors.push('Referencia ausente')
     if (!card.namePt && !card.nameEn) cardErrors.push('Nome ausente')
     if (cardErrors.length > 0) {
       errors.push({
-        card: card.namePt || card.nameEn || card.number || 'Desconhecida',
+        card: card.namePt || card.nameEn || card.number || 'Desconhecido',
         errors: cardErrors
       })
     }

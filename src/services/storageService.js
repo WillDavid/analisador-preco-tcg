@@ -1,8 +1,24 @@
 import { generateId } from '@/utils/identifiers.js'
 
-const STORAGE_IMPORTS = 'pokemon_imports'
-const STORAGE_PRICE_HISTORY = 'pokemon_price_history'
-const STORAGE_SETTINGS = 'pokemon_settings'
+const STORAGE_IMPORTS = 'data_imports'
+const STORAGE_PRICE_HISTORY = 'data_price_history'
+const STORAGE_SETTINGS = 'data_settings'
+
+const OLD_IMPORTS = 'pokemon_imports'
+const OLD_PRICE_HISTORY = 'pokemon_price_history'
+const OLD_SETTINGS = 'pokemon_settings'
+
+function migrate() {
+  try {
+    if (!localStorage.getItem(STORAGE_IMPORTS) && localStorage.getItem(OLD_IMPORTS)) {
+      localStorage.setItem(STORAGE_IMPORTS, localStorage.getItem(OLD_IMPORTS))
+      localStorage.setItem(STORAGE_PRICE_HISTORY, localStorage.getItem(OLD_PRICE_HISTORY) || '[]')
+      localStorage.setItem(STORAGE_SETTINGS, localStorage.getItem(OLD_SETTINGS) || '{}')
+    }
+  } catch { /* ignore */ }
+}
+
+migrate()
 
 export function getImports() {
   try {
@@ -151,7 +167,7 @@ export function exportAllData() {
 
 export function importAllData(data) {
   if (!data || !data.imports || !data.priceHistory) {
-    throw new Error('Arquivo de backup inválido')
+    throw new Error('Arquivo de backup invalido')
   }
   localStorage.setItem(STORAGE_IMPORTS, JSON.stringify(data.imports))
   localStorage.setItem(STORAGE_PRICE_HISTORY, JSON.stringify(data.priceHistory))

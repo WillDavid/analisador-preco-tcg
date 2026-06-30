@@ -1,18 +1,18 @@
 <template>
   <div>
     <div class="page-header">
-      <h1>Importar PDF</h1>
-      <p>Faça upload do PDF da coleção para extrair os preços das cartas.</p>
+      <h1>{{ t('import.heading') }}</h1>
+      <p>{{ t('import.subheading') }}</p>
     </div>
 
     <div v-if="!parsedData" class="card mb-6">
       <div class="form-row">
         <div class="form-group">
-          <label>Arquivo PDF</label>
+          <label>{{ t('import.fileLabel') }}</label>
           <input type="file" accept=".pdf,application/pdf" @change="handleFile" ref="fileInput" />
         </div>
         <div class="form-group">
-          <label>Data de referência</label>
+          <label>{{ t('import.dateLabel') }}</label>
           <input type="date" v-model="referenceDate" />
         </div>
       </div>
@@ -26,7 +26,7 @@
       >
         <LoaderIcon v-if="processing" :size="16" class="spinner" />
         <UploadIcon v-else :size="16" />
-        {{ processing ? 'Processando...' : 'Processar PDF' }}
+        {{ processing ? t('import.processing') : t('import.processBtn') }}
       </button>
     </div>
 
@@ -38,46 +38,46 @@
     <div v-if="parsedData && !confirmed" class="card mb-6">
       <div class="flex justify-between items-center mb-4">
         <div>
-          <h3 class="text-lg font-bold">Conferência dos dados</h3>
+          <h3 class="text-lg font-bold">{{ t('import.reviewTitle') }}</h3>
           <p class="text-sm text-gray">
             {{ selectedFile?.name }} — {{ formatDate(referenceDate) }}
           </p>
         </div>
         <div class="flex gap-2">
-          <button @click="handleCancel">Cancelar</button>
+          <button @click="handleCancel">{{ t('import.cancelBtn') }}</button>
           <button class="btn-primary" @click="handleConfirm" :disabled="saving">
             <LoaderIcon v-if="saving" :size="16" class="spinner" />
-            Confirmar importação
+            {{ t('import.confirmBtn') }}
           </button>
         </div>
       </div>
 
       <div class="summary-grid mb-4">
         <div class="summary-card">
-          <div class="label">Cartas encontradas</div>
+          <div class="label">{{ t('import.foundCards') }}</div>
           <div class="value">{{ parsedData.cards.length }}</div>
         </div>
         <div class="summary-card">
-          <div class="label">Unidades</div>
+          <div class="label">{{ t('import.units') }}</div>
           <div class="value">{{ totalUnits }}</div>
         </div>
         <div v-if="parsedData.errors.length" class="summary-card">
-          <div class="label">Erros</div>
+          <div class="label">{{ t('import.errors') }}</div>
           <div class="value text-red">{{ parsedData.errors.length }}</div>
         </div>
         <div class="summary-card">
-          <div class="label">Total Compra Menor</div>
+          <div class="label">{{ t('import.totalBuyMin') }}</div>
           <div class="value">{{ formatCurrency(parsedData.totals.buyMin) }}</div>
         </div>
         <div class="summary-card">
-          <div class="label">Total Venda Médio</div>
+          <div class="label">{{ t('import.totalSellAvg') }}</div>
           <div class="value">{{ formatCurrency(parsedData.totals.sellAvg) }}</div>
         </div>
       </div>
 
       <div v-if="parsedData.errors.length" class="alert alert-warning mb-4">
         <AlertTriangleIcon :size="16" />
-        {{ parsedData.errors.length }} linha(s) com possíveis problemas. Corrija-as antes de confirmar.
+        {{ parsedData.errors.length }} {{ t('import.warningPrefix') }}
       </div>
 
       <ImportPreviewTable
@@ -87,20 +87,20 @@
       />
 
       <div class="mt-4">
-        <button class="btn-sm" @click="addCard">+ Adicionar carta</button>
+        <button class="btn-sm" @click="addCard">{{ t('import.addCard') }}</button>
       </div>
     </div>
 
     <div v-if="confirmed" class="alert alert-success mb-4">
       <CheckCircleIcon :size="16" />
-      Importação realizada com sucesso! {{ editableCards.length }} cartas importadas para {{ formatDate(referenceDate) }}.
+      {{ t('import.success') }} {{ editableCards.length }} {{ t('import.successMsg') }} {{ formatDate(referenceDate) }}.
     </div>
 
     <ConfirmModal
       :visible="showConfirm"
-      title="Data já importada"
-      message="Já existe uma importação para esta data. Deseja substituir os dados existentes?"
-      confirmLabel="Substituir"
+      :title="t('import.duplicateTitle')"
+      :message="t('import.duplicateMsg')"
+      :confirmLabel="t('import.replaceBtn')"
       :danger="true"
       @confirm="doSave"
       @cancel="showConfirm = false"
@@ -121,12 +121,17 @@ import {
   saveImport,
   savePriceHistory
 } from '@/services/storageService.js'
+import { useLabels } from '@/composables/useLabels.js'
 import ImportPreviewTable from '@/components/ImportPreviewTable.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 
 export default {
   name: 'ImportView',
   components: { ImportPreviewTable, ConfirmModal, UploadIcon, LoaderIcon, AlertTriangleIcon, CheckCircleIcon },
+  setup() {
+    const { t } = useLabels()
+    return { t }
+  },
   data() {
     return {
       selectedFile: null,
@@ -158,7 +163,7 @@ export default {
       const file = e.target.files[0]
       if (!file) return
       if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-        this.errorMsg = 'O arquivo selecionado não é um PDF.'
+        this.errorMsg = this.t('error.notPdf')
         return
       }
       this.selectedFile = file
@@ -173,7 +178,7 @@ export default {
       try {
         const result = await processPdf(this.selectedFile)
         if (result.cards.length === 0) {
-          this.parseError = 'Nenhuma carta identificada no PDF. Verifique se o arquivo contém uma tabela de cartas.'
+          this.parseError = this.t('error.noCards')
           this.processing = false
           return
         }
@@ -187,7 +192,7 @@ export default {
         this.parsedData = result
       } catch (err) {
         console.error('Erro ao processar PDF:', err)
-        this.parseError = 'Erro ao processar o PDF. O arquivo pode estar protegido ou corrompido.'
+        this.parseError = this.t('error.process')
       } finally {
         this.processing = false
       }
@@ -195,9 +200,9 @@ export default {
 
     validateCard(card) {
       const errors = []
-      if (!card.edition) errors.push('Edição ausente')
-      if (!card.number) errors.push('Número ausente')
-      if (!card.namePt && !card.nameEn) errors.push('Nome ausente')
+      if (!card.edition) errors.push(this.t('error.editionMissing'))
+      if (!card.number) errors.push(this.t('error.numberMissing'))
+      if (!card.namePt && !card.nameEn) errors.push(this.t('error.nameMissing'))
       return errors
     },
 
@@ -227,7 +232,7 @@ export default {
         sellMin: null,
         sellAvg: null,
         sellMax: null,
-        _errors: ['Nova carta']
+        _errors: [this.t('error.newCard')]
       })
     },
 
@@ -305,7 +310,7 @@ export default {
         this.confirmed = true
       } catch (err) {
         console.error('Erro ao salvar:', err)
-        alert('Erro ao salvar os dados no navegador.')
+        alert(this.t('error.saveFail'))
       } finally {
         this.saving = false
       }

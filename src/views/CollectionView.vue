@@ -1,39 +1,39 @@
 <template>
   <div>
     <div class="page-header">
-      <h1>Minha Coleção</h1>
-      <p>{{ filteredRows.length }} cartas exibidas</p>
+      <h1>{{ t('collection.heading') }}</h1>
+      <p>{{ filteredRows.length }} {{ t('collection.subheading') }}</p>
     </div>
 
     <div class="card mb-6">
       <div class="filters">
         <div class="field">
-          <label>Buscar</label>
-          <input v-model="search" type="text" placeholder="Nome da carta..." />
+          <label>{{ t('collection.searchLabel') }}</label>
+          <input v-model="search" type="text" :placeholder="t('collection.searchPlaceholder')" />
         </div>
         <div class="field">
-          <label>Edição</label>
+          <label>{{ t('collection.editionLabel') }}</label>
           <select v-model="filterEdition">
-            <option value="">Todas</option>
+            <option value="">{{ t('collection.editionAll') }}</option>
             <option v-for="ed in editions" :key="ed" :value="ed">{{ ed }}</option>
           </select>
         </div>
         <div class="field">
-          <label>Ordenar</label>
+          <label>{{ t('collection.sortLabel') }}</label>
           <select v-model="sortField">
-            <option value="name">Nome</option>
-            <option value="currentPrice">Preço Atual</option>
-            <option value="previousPrice">Preço Anterior</option>
-            <option value="variationPercent">Maior Variação (%)</option>
-            <option value="variationValue">Maior Variação (R$)</option>
-            <option value="referenceDate">Últimas Variações</option>
+            <option value="name">{{ t('collection.sortName') }}</option>
+            <option value="currentPrice">{{ t('collection.sortCurrPrice') }}</option>
+            <option value="previousPrice">{{ t('collection.sortPrevPrice') }}</option>
+            <option value="variationPercent">{{ t('collection.sortVarPercent') }}</option>
+            <option value="variationValue">{{ t('collection.sortVarValue') }}</option>
+            <option value="referenceDate">{{ t('collection.sortRecent') }}</option>
           </select>
         </div>
         <div class="field">
-          <label>Ordem</label>
+          <label>{{ t('collection.orderLabel') }}</label>
           <select v-model="sortDir">
-            <option value="desc">Decrescente</option>
-            <option value="asc">Crescente</option>
+            <option value="desc">{{ t('collection.orderDesc') }}</option>
+            <option value="asc">{{ t('collection.orderAsc') }}</option>
           </select>
         </div>
       </div>
@@ -41,17 +41,17 @@
 
     <div v-if="rows.length === 0" class="empty-state">
       <div class="icon"><PackageIcon :size="48" /></div>
-      <h3>Nenhuma carta na coleção</h3>
-      <p>Importe um PDF para começar a acompanhar sua coleção.</p>
-      <router-link to="/importar" class="btn-primary">Importar PDF</router-link>
+      <h3>{{ t('collection.emptyTitle') }}</h3>
+      <p>{{ t('collection.emptyMsg') }}</p>
+      <router-link :to="navPath('/importar', '/carga')" class="btn-primary">{{ t('collection.emptyBtn') }}</router-link>
     </div>
 
     <div v-else class="card">
       <CollectionTable :rows="paginatedRows" @sort="handleSort" @card-click="openDetail" />
       <div v-if="totalPages > 1" class="pagination">
-        <button :disabled="page <= 1" @click="page--">Anterior</button>
+        <button :disabled="page <= 1" @click="page--">{{ t('collection.prevBtn') }}</button>
         <span class="text-sm text-gray">{{ page }} de {{ totalPages }}</span>
-        <button :disabled="page >= totalPages" @click="page++">Próximo</button>
+        <button :disabled="page >= totalPages" @click="page++">{{ t('collection.nextBtn') }}</button>
       </div>
     </div>
 
@@ -67,12 +67,17 @@
 import { PackageIcon } from 'lucide-vue-next'
 import { getImports, getPriceHistoryByImportId } from '@/services/storageService.js'
 import { computeComparison } from '@/services/calculationService.js'
+import { useLabels } from '@/composables/useLabels.js'
 import CollectionTable from '@/components/CollectionTable.vue'
 import CardDetailModal from '@/components/CardDetailModal.vue'
 
 export default {
   name: 'CollectionView',
   components: { CollectionTable, CardDetailModal, PackageIcon },
+  setup() {
+    const { t, mode } = useLabels()
+    return { t, mode }
+  },
   data() {
     return {
       rows: [],
@@ -126,6 +131,9 @@ export default {
     }
   },
   methods: {
+    navPath(base, stealth) {
+      return this.mode === 'stealth' ? stealth : base
+    },
     handleSort(field) {
       if (this.sortField === field) {
         this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc'

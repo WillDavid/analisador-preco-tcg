@@ -3,21 +3,21 @@
     <table>
       <thead>
         <tr>
-          <th>Edição</th>
-          <th>Número</th>
-          <th>Nome</th>
-          <th>Qtd</th>
-          <th>Raridade</th>
-          <th>Idioma</th>
-          <th>Cond.</th>
-          <th>Extra</th>
-          <th>C-Menor</th>
-          <th>C-Médio</th>
-          <th>C-Maior</th>
-          <th>V-Menor</th>
-          <th>V-Médio</th>
-          <th>V-Maior</th>
-          <th>Status</th>
+          <th>{{ t('table.edition') }}</th>
+          <th>{{ t('table.numberFull') }}</th>
+          <th>{{ t('table.name') }}</th>
+          <th>{{ t('table.qtd') }}</th>
+          <th>{{ t('table.rarity') }}</th>
+          <th>{{ t('table.language') }}</th>
+          <th>{{ t('table.condition') }}</th>
+          <th>{{ t('table.extra') }}</th>
+          <th>{{ t('price.abbr.buyMin') }}</th>
+          <th>{{ t('price.abbr.buyAvg') }}</th>
+          <th>{{ t('price.abbr.buyMax') }}</th>
+          <th>{{ t('price.abbr.sellMin') }}</th>
+          <th>{{ t('price.abbr.sellAvg') }}</th>
+          <th>{{ t('price.abbr.sellMax') }}</th>
+          <th>{{ t('table.status') }}</th>
           <th></th>
         </tr>
       </thead>
@@ -43,12 +43,12 @@
           <td><input class="editable-cell" v-model.number="row.sellMax" type="number" step="0.01" style="min-width:80px" @input="emitUpdate" /></td>
           <td>
             <span v-if="row._errors && row._errors.length" class="badge badge-red" :title="row._errors.join(', ')">
-              {{ row._errors.length }} erro(s)
+              {{ row._errors.length }} {{ t('detail.errors') }}
             </span>
-            <span v-else class="badge badge-green">OK</span>
+            <span v-else class="badge badge-green">{{ t('detail.ok') }}</span>
           </td>
           <td>
-            <button class="btn-sm btn-danger" @click="$emit('remove', idx)">Excluir</button>
+            <button class="btn-sm btn-danger" @click="$emit('remove', idx)">{{ t('history.deleteBtn') }}</button>
           </td>
         </tr>
       </tbody>
@@ -57,12 +57,18 @@
 </template>
 
 <script>
+import { useLabels } from '@/composables/useLabels.js'
+
 export default {
   name: 'ImportPreviewTable',
   props: {
     cards: { type: Array, required: true }
   },
   emits: ['update', 'remove'],
+  setup() {
+    const { t } = useLabels()
+    return { t }
+  },
   methods: {
     emitUpdate() {
       this.$emit('update', this.cards)

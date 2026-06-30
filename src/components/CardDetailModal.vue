@@ -2,74 +2,74 @@
   <div v-if="visible" class="modal-overlay" @click.self="$emit('close')">
     <div class="modal" style="max-width:680px">
       <div class="flex justify-between items-center mb-4">
-        <h3>{{ card.name || 'Carta' }}</h3>
-        <button class="btn-sm" @click="$emit('close')">Fechar</button>
+        <h3>{{ card.name || t('detail.cardFallback') }}</h3>
+        <button class="btn-sm" @click="$emit('close')">{{ t('modal.close') }}</button>
       </div>
 
       <div class="summary-grid mb-4" v-if="card.name">
         <div class="summary-card">
-          <div class="label">Edição</div>
+          <div class="label">{{ t('detail.edition') }}</div>
           <div class="value text-sm">{{ card.edition }}</div>
         </div>
         <div class="summary-card">
-          <div class="label">Número</div>
+          <div class="label">{{ t('detail.number') }}</div>
           <div class="value text-sm">{{ card.number }}</div>
         </div>
         <div class="summary-card">
-          <div class="label">Raridade</div>
+          <div class="label">{{ t('detail.rarity') }}</div>
           <div class="value text-sm">{{ card.rarity }}</div>
         </div>
         <div class="summary-card">
-          <div class="label">Qtd / Idioma / Cond.</div>
+          <div class="label">{{ t('detail.qtdLangCond') }}</div>
           <div class="value text-sm">{{ card.quantity }} / {{ card.language }} / {{ card.condition }}</div>
         </div>
       </div>
 
       <div class="flex items-center gap-4 mb-4">
         <div class="summary-card" style="flex:1">
-          <div class="label">Preço Atual ({{ priceLabel }})</div>
+          <div class="label">{{ t('detail.priceCurrent') }} ({{ priceLabel }})</div>
           <div class="value">{{ formatCurrency(currentPrice) }}</div>
         </div>
         <div class="summary-card" style="flex:1">
-          <div class="label">Menor Registrado</div>
+          <div class="label">{{ t('price.minRegistered') }}</div>
           <div class="value">{{ formatCurrency(minPrice) }}</div>
         </div>
         <div class="summary-card" style="flex:1">
-          <div class="label">Maior Registrado</div>
+          <div class="label">{{ t('price.maxRegistered') }}</div>
           <div class="value">{{ formatCurrency(maxPrice) }}</div>
         </div>
       </div>
 
       <div class="mb-3">
-        <label class="text-xs text-gray">Preço exibido:</label>
+        <label class="text-xs text-gray">{{ t('price.displayLabel') }}</label>
         <select v-model="selectedField" class="mt-1" style="width:auto">
-          <option value="buyMin">Compra Menor</option>
-          <option value="buyAvg">Compra Média</option>
-          <option value="buyMax">Compra Maior</option>
-          <option value="sellMin">Venda Menor</option>
-          <option value="sellAvg">Venda Média</option>
-          <option value="sellMax">Venda Maior</option>
+          <option value="buyMin">{{ t('price.buyMin') }}</option>
+          <option value="buyAvg">{{ t('price.buyAvg') }}</option>
+          <option value="buyMax">{{ t('price.buyMax') }}</option>
+          <option value="sellMin">{{ t('price.sellMin') }}</option>
+          <option value="sellAvg">{{ t('price.sellAvg') }}</option>
+          <option value="sellMax">{{ t('price.sellMax') }}</option>
         </select>
       </div>
 
       <div v-if="chartLabels.length > 0" style="height:240px">
         <canvas ref="canvas"></canvas>
       </div>
-      <p v-if="chartData.length <= 1" class="text-gray text-sm">Importe mais datas para visualizar a evolução.</p>
+      <p v-if="chartData.length <= 1" class="text-gray text-sm">{{ t('detail.noHistory') }}</p>
 
       <div class="mt-4" v-if="history.length">
-        <h4 class="mb-2 font-bold">Histórico</h4>
+        <h4 class="mb-2 font-bold">{{ t('detail.historyTitle') }}</h4>
         <table class="text-xs">
           <thead>
             <tr>
-              <th>Data</th>
-              <th>Qtd</th>
-              <th>C-Menor</th>
-              <th>C-Médio</th>
-              <th>C-Maior</th>
-              <th>V-Menor</th>
-              <th>V-Médio</th>
-              <th>V-Maior</th>
+              <th>{{ t('table.history.date') }}</th>
+              <th>{{ t('table.history.qtd') }}</th>
+              <th>{{ t('price.abbr.buyMin') }}</th>
+              <th>{{ t('price.abbr.buyAvg') }}</th>
+              <th>{{ t('price.abbr.buyMax') }}</th>
+              <th>{{ t('price.abbr.sellMin') }}</th>
+              <th>{{ t('price.abbr.sellAvg') }}</th>
+              <th>{{ t('price.abbr.sellMax') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -96,6 +96,12 @@ Chart.register(...registerables)
 import { formatBrazilianCurrency } from '@/utils/currency.js'
 import { formatDate } from '@/utils/dates.js'
 import { getImports, getPriceHistoryByKey } from '@/services/storageService.js'
+import { useLabels } from '@/composables/useLabels.js'
+
+const priceLabelMap = {
+  buyMin: 'price.buyMin', buyAvg: 'price.buyAvg', buyMax: 'price.buyMax',
+  sellMin: 'price.sellMin', sellAvg: 'price.sellAvg', sellMax: 'price.sellMax'
+}
 
 export default {
   name: 'CardDetailModal',
@@ -104,6 +110,10 @@ export default {
     card: { type: Object, default: () => ({}) }
   },
   emits: ['close'],
+  setup() {
+    const { t } = useLabels()
+    return { t }
+  },
   data() {
     return {
       selectedField: 'buyMin',
@@ -112,9 +122,8 @@ export default {
   },
   computed: {
     priceLabel() {
-      const map = { buyMin:'Compra Menor', buyAvg:'Compra Média', buyMax:'Compra Maior',
-        sellMin:'Venda Menor', sellAvg:'Venda Média', sellMax:'Venda Maior' }
-      return map[this.selectedField] || ''
+      const key = priceLabelMap[this.selectedField] || ''
+      return key ? this.t(key) : ''
     },
     history() {
       if (!this.card.uniqueKey) return []

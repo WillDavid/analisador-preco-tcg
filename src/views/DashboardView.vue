@@ -1,16 +1,16 @@
 <template>
   <div>
     <div class="page-header">
-      <h1>Dashboard</h1>
-      <p v-if="lastUpdate">Última atualização: {{ formatDate(lastUpdate) }}</p>
+      <h1>{{ t('dashboard.heading') }}</h1>
+      <p v-if="lastUpdate">{{ t('dashboard.lastUpdate') }} {{ formatDate(lastUpdate) }}</p>
     </div>
 
     <div v-if="hasMultiple" class="summary-grid mb-6">
-      <SummaryCard label="Valor da Coleção" :value="currentTotal" isCurrency />
-      <SummaryCard label="Cartas" :value="totalCards" />
-      <SummaryCard label="Unidades" :value="totalUnits" />
+      <SummaryCard :label="t('dashboard.collectionValue')" :value="currentTotal" isCurrency />
+      <SummaryCard :label="t('dashboard.cards')" :value="totalCards" />
+      <SummaryCard :label="t('dashboard.units')" :value="totalUnits" />
       <SummaryCard
-        label="Variação"
+        :label="t('dashboard.variation')"
         :isCurrency="true"
         :value="variation"
         :subtext="variationPercentText"
@@ -20,31 +20,31 @@
 
     <div v-if="imports.length === 0" class="empty-state">
       <div class="icon"><FileDownIcon :size="48" /></div>
-      <h3>Nenhuma coleção importada</h3>
-      <p>Importe seu primeiro PDF para começar a acompanhar a evolução dos preços.</p>
-      <router-link to="/importar" class="btn-primary">Importar primeiro PDF</router-link>
+      <h3>{{ t('dashboard.emptyTitle') }}</h3>
+      <p>{{ t('dashboard.emptyMsg') }}</p>
+      <router-link :to="navPath('/importar', '/carga')" class="btn-primary">{{ t('dashboard.emptyBtn') }}</router-link>
     </div>
 
     <div v-else-if="imports.length === 1" class="empty-state">
       <div class="icon"><FileDownIcon :size="48" /></div>
-      <h3>Apenas uma importação</h3>
-      <p>Importe um novo PDF em outra data para começar a comparar os preços.</p>
-      <router-link to="/importar" class="btn-primary">Importar novo PDF</router-link>
+      <h3>{{ t('dashboard.singleTitle') }}</h3>
+      <p>{{ t('dashboard.singleMsg') }}</p>
+      <router-link :to="navPath('/importar', '/carga')" class="btn-primary">{{ t('dashboard.singleBtn') }}</router-link>
     </div>
 
     <template v-else>
       <div class="flex gap-8 mb-6">
         <div class="card" style="flex:1">
-          <h3 class="mb-4 font-bold">Top 5 — Maiores Altas</h3>
+          <h3 class="mb-4 font-bold">{{ t('dashboard.topGainers') }}</h3>
           <table class="ranking-table" v-if="topGainers.length">
             <thead>
               <tr>
-                <th>Carta</th>
-                <th>Edição</th>
-                <th>Nº</th>
-                <th>Anterior</th>
-                <th>Atual</th>
-                <th>Variação</th>
+                <th>{{ t('table.card') }}</th>
+                <th>{{ t('table.edition') }}</th>
+                <th>{{ t('table.number') }}</th>
+                <th>{{ t('table.previous') }}</th>
+                <th>{{ t('table.current') }}</th>
+                <th>{{ t('table.variation') }}</th>
                 <th>%</th>
               </tr>
             </thead>
@@ -64,20 +64,20 @@
               </tr>
             </tbody>
           </table>
-          <p v-else class="text-gray text-sm">Nenhuma carta com valorização nesta comparação.</p>
+          <p v-else class="text-gray text-sm">{{ t('data.noGainers') }}</p>
         </div>
 
         <div class="card" style="flex:1">
-          <h3 class="mb-4 font-bold">Top 5 — Maiores Quedas</h3>
+          <h3 class="mb-4 font-bold">{{ t('dashboard.topLosers') }}</h3>
           <table class="ranking-table" v-if="topLosers.length">
             <thead>
               <tr>
-                <th>Carta</th>
-                <th>Edição</th>
-                <th>Nº</th>
-                <th>Anterior</th>
-                <th>Atual</th>
-                <th>Variação</th>
+                <th>{{ t('table.card') }}</th>
+                <th>{{ t('table.edition') }}</th>
+                <th>{{ t('table.number') }}</th>
+                <th>{{ t('table.previous') }}</th>
+                <th>{{ t('table.current') }}</th>
+                <th>{{ t('table.variation') }}</th>
                 <th>%</th>
               </tr>
             </thead>
@@ -97,19 +97,19 @@
               </tr>
             </tbody>
           </table>
-          <p v-else class="text-gray text-sm">Nenhuma carta com queda nesta comparação.</p>
+          <p v-else class="text-gray text-sm">{{ t('data.noLosers') }}</p>
         </div>
       </div>
 
       <div class="card mb-6">
-        <h3 class="mb-4 font-bold">Evolução da Coleção</h3>
-        <CollectionChart :labels="chartLabels" :data="chartData" label="Valor Total (Compra Menor)" />
+        <h3 class="mb-4 font-bold">{{ t('dashboard.evolution') }}</h3>
+        <CollectionChart :labels="chartLabels" :data="chartData" :label="t('dashboard.chartLabel')" />
       </div>
 
       <div class="card" v-if="newCards.length || removedCards.length">
-        <h3 class="mb-4 font-bold">Alterações na Coleção</h3>
+        <h3 class="mb-4 font-bold">{{ t('dashboard.changes') }}</h3>
         <div v-if="newCards.length" class="mb-3">
-          <p class="font-bold text-sm mb-2 text-green">Novas cartas ({{ newCards.length }})</p>
+          <p class="font-bold text-sm mb-2 text-green">{{ t('dashboard.newCards') }} ({{ newCards.length }})</p>
           <div class="flex flex-wrap gap-1">
             <span v-for="card in newCards" :key="card.uniqueKey" class="badge badge-green">
               {{ card.name || card.uniqueKey }}
@@ -117,7 +117,7 @@
           </div>
         </div>
         <div v-if="removedCards.length">
-          <p class="font-bold text-sm mb-2 text-red">Cartas removidas ({{ removedCards.length }})</p>
+          <p class="font-bold text-sm mb-2 text-red">{{ t('dashboard.removedCards') }} ({{ removedCards.length }})</p>
           <div class="flex flex-wrap gap-1">
             <span v-for="card in removedCards" :key="card.uniqueKey" class="badge badge-red">
               {{ card.name || card.uniqueKey }}
@@ -141,6 +141,7 @@ import { getImports, getPriceHistoryByImportId } from '@/services/storageService
 import { getCollectionTotal, getTotalCards, getTotalUnits, computeComparison, getTopGainers, getTopLosers } from '@/services/calculationService.js'
 import { formatBrazilianCurrency } from '@/utils/currency.js'
 import { formatDate } from '@/utils/dates.js'
+import { useLabels } from '@/composables/useLabels.js'
 import SummaryCard from '@/components/SummaryCard.vue'
 import PriceVariation from '@/components/PriceVariation.vue'
 import CollectionChart from '@/components/CollectionChart.vue'
@@ -149,6 +150,10 @@ import CardDetailModal from '@/components/CardDetailModal.vue'
 export default {
   name: 'DashboardView',
   components: { SummaryCard, PriceVariation, CollectionChart, CardDetailModal, FileDownIcon },
+  setup() {
+    const { t, mode } = useLabels()
+    return { t, mode }
+  },
   data() {
     return {
       imports: [],
@@ -213,6 +218,9 @@ export default {
     }
   },
   methods: {
+    navPath(base, stealth) {
+      return this.mode === 'stealth' ? stealth : base
+    },
     formatCurrency(val) { return formatBrazilianCurrency(val) },
     formatDate(val) { return formatDate(val) },
     loadData() {
