@@ -7,15 +7,17 @@ const router = Router()
 function queryAll(sql, params = []) {
   const db = getDb()
   try {
-    const result = db.exec(sql, params)
-    if (!result.length) return []
-    const { columns, values } = result[0]
-    return values.map(row => {
-      const obj = {}
-      columns.forEach((col, i) => { obj[col] = row[i] })
-      return obj
-    })
-  } catch (e) {
+    const stmt = db.prepare(sql)
+    if (params.length > 0) {
+      stmt.bind(params)
+    }
+    const rows = []
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject())
+    }
+    stmt.free()
+    return rows
+  } catch {
     return []
   }
 }
